@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"errors"
 	"fmt"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
@@ -18,7 +19,6 @@ const (
 	zigCode    = "// Your imports\nconst std = @import(\"std\");\n\npub fn main() void {\n\t// Your logic\n\tstd.debug.print(\">:3\\n\", .{});\n}\n"
 	nimCode    = "proc main() =\n    # Your logic\n    echo \">:3\"\n\nwhen isMainModule:\n    main()\n"
 	hsCode     = "main :: IO ()\nmain = putStrLn \">:3\"\n"
-	javaCode   = "// Your imports\n\npublic class Main {\n\tpublic static void main(String[] args) {\n\t\t// Your logic\n\t\tSystem.out.println(\">:3\");\n\t}\n}\n"
 	kotlinCode = "// Your imports\n\nfun main() {\n\t// Your logic\n\tprintln(\">:3\")\n}\n"
 	swiftCode  = "// Your imports\nimport Foundation\n\n// Your logic\nprint(\">:3\")\n"
 	vCode      = "fn main() {\n\t// Your logic\n\tprintln('>:3')\n}\n"
@@ -31,22 +31,43 @@ const (
 	perlCode = "#!/usr/bin/env perl\n\n# Your modules\nuse strict;\nuse warnings;\n\n# Your logic\nprint(\">:3\\n\")\n"
 	luaCode  = "#!/usr/bin/env lua\n\n-- Your logic\nprint(\">:3\")\n"
 	bashCode = "#!/usr/bin/env bash\n\n# Your logic\necho \">:3\"\n"
-	shCode   = "#!/bin/sh\n\n# Your logic\necho \">:3\"\n"
 )
 
-var VERSION = "v0.1.0"
+var stubs = map[string]string{
+	// Compiled langs
+	".go":    goCode,
+	".c":     cCode,
+	".cpp":   cppCode,
+	".cc":    cppCode,
+	".cxx":   cppCode,
+	".rs":    rustCode,
+	".zig":   zigCode,
+	".nim":   nimCode,
+	".hs":    hsCode,
+	".kt":    kotlinCode,
+	".swift": swiftCode,
+	".v":     vCode,
+
+	// Interpreted langs
+	".py":  pyCode,
+	".js":  jsTsCode,
+	".ts":  jsTsCode,
+	".php": phpCode,
+	".rb":  rubyCode,
+	".pl":  perlCode,
+	".lua": luaCode,
+	".sh":  bashCode,
+}
+
+var VERSION = "v0.2.0"
 
 func usage() {
 	fmt.Println("imp")
 }
 
-func parseArgs() string {
+func parseArgs() (string, bool) {
 	var posArgs []string
-
-	if len(os.Args) == 1 {
-		usage()
-		os.Exit(2)
-	}
+	force := false
 
 	for i := 1; i < len(os.Args); i++ {
 		switch os.Args[i] {
@@ -56,101 +77,52 @@ func parseArgs() string {
 		case "-v", "--version":
 			fmt.Printf("imp %s\n", VERSION)
 			os.Exit(0)
+		case "-f", "--force":
+			force = true
 		default:
 			posArgs = append(posArgs, os.Args[i])
 		}
 	}
 
-	return posArgs[0]
+	if len(posArgs) == 0 {
+		usage()
+		os.Exit(2)
+	}
+
+	return posArgs[0], force
 }
 
-func writeToFile(file string, code string) error {
-	err := os.WriteFile(file, []byte(code), 0744)
+func writeToFile(file string, code string, force bool) error {
+	flags := os.O_WRONLY | os.O_CREATE | os.O_EXCL
+	if force {
+		flags = os.O_WRONLY | os.O_CREATE | os.O_TRUNC
+	}
+
+	f, err := os.OpenFile(file, flags, 0744)
+	if errors.Is(err, fs.ErrExist) {
+		return errors.New("ERROR: " + file + " already exists, use -f to overwrite.")
+	}
 	if err != nil {
 		return errors.New("ERROR: Couldn't write to " + file)
 	}
-	return nil
+	defer f.Close()
+
+	if _, err := f.WriteString(code); err != nil {
+		return errors.New("ERROR: Couldn't write to " + file)
+	}
+	return f.Close()
 }
 
 func main() {
-	file := parseArgs()
+	file, force := parseArgs()
 	ext := filepath.Ext(file)
 
-	switch ext {
-	case ".go":
-		if err := writeToFile(file, goCode); err != nil {
-			log.Fatal(err)
-		}
-	case ".c":
-		if err := writeToFile(file, cCode); err != nil {
-			log.Fatal(err)
-		}
-	case ".cpp", ".cc", ".cxx":
-		if err := writeToFile(file, cppCode); err != nil {
-			log.Fatal(err)
-		}
-	case ".rs":
-		if err := writeToFile(file, rustCode); err != nil {
-			log.Fatal(err)
-		}
-	case ".zig":
-		if err := writeToFile(file, zigCode); err != nil {
-			log.Fatal(err)
-		}
-	case ".nim":
-		if err := writeToFile(file, nimCode); err != nil {
-			log.Fatal(err)
-		}
-	case ".hs":
-		if err := writeToFile(file, hsCode); err != nil {
-			log.Fatal(err)
-		}
-	case ".java":
-		if err := writeToFile(file, javaCode); err != nil {
-			log.Fatal(err)
-		}
-	case ".kt":
-		if err := writeToFile(file, kotlinCode); err != nil {
-			log.Fatal(err)
-		}
-
-	case ".swift":
-		if err := writeToFile(file, swiftCode); err != nil {
-			log.Fatal(err)
-		}
-	case ".v":
-		if err := writeToFile(file, vCode); err != nil {
-			log.Fatal(err)
-		}
-	case ".py":
-		if err := writeToFile(file, pyCode); err != nil {
-			log.Fatal(err)
-		}
-	case ".js", ".ts":
-		if err := writeToFile(file, jsTsCode); err != nil {
-			log.Fatal(err)
-		}
-	case ".php":
-		if err := writeToFile(file, phpCode); err != nil {
-			log.Fatal(err)
-		}
-	case ".rb":
-		if err := writeToFile(file, rubyCode); err != nil {
-			log.Fatal(err)
-		}
-	case ".pl":
-		if err := writeToFile(file, perlCode); err != nil {
-			log.Fatal(err)
-		}
-	case ".lua":
-		if err := writeToFile(file, luaCode); err != nil {
-			log.Fatal(err)
-		}
-	case ".sh":
-		if err := writeToFile(file, bashCode); err != nil {
-			log.Fatal(err)
-		}
-	default:
+	code, ok := stubs[ext]
+	if !ok {
 		log.Fatal("ERROR: Cannot create stub for " + cmp.Or(ext, "EMPTY") + " extension.")
+	}
+
+	if err := writeToFile(file, code, force); err != nil {
+		log.Fatal(err)
 	}
 }
