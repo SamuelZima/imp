@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"log"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 const (
@@ -25,7 +25,7 @@ const (
 
 	// Interpreted langs
 	pyCode   = "#!/usr/bin/env python3\n\ndef main():\n\t# Your logic\n\tprint(\">:3\")\n\nif __name__ == \"__main__\":\n\tmain()\n"
-	jsTsCode = "// Your logic\nconsole.log(\">:3\")\n"
+	jsTsCode = "#!/usr/bin/env node\n\n// Your logic\nconsole.log(\">:3\")\n"
 	phpCode  = "#!/usr/bin/env php\n<?php\n// Your logic\necho \">:3\\n\";\n"
 	rubyCode = "#!/usr/bin/env ruby\n\n# Your logic\nputs \">:3\"\n"
 	perlCode = "#!/usr/bin/env perl\n\n# Your modules\nuse strict;\nuse warnings;\n\n# Your logic\nprint(\">:3\\n\")\n"
@@ -59,7 +59,7 @@ var stubs = map[string]string{
 	".sh":  bashCode,
 }
 
-var VERSION = "v0.2.0"
+var VERSION = "v0.3.0"
 
 func usage() {
 	fmt.Println("imp")
@@ -80,6 +80,10 @@ func parseArgs() (string, bool) {
 		case "-f", "--force":
 			force = true
 		default:
+			if strings.HasPrefix(os.Args[i], "-") {
+				fmt.Println("ERROR: Unknown flag " + os.Args[i])
+				os.Exit(2)
+			}
 			posArgs = append(posArgs, os.Args[i])
 		}
 	}
@@ -93,22 +97,32 @@ func parseArgs() (string, bool) {
 }
 
 func writeToFile(file string, code string, force bool) error {
+	// Set flags for file operations
 	flags := os.O_WRONLY | os.O_CREATE | os.O_EXCL
 	if force {
+		// Only overwrite file when force flag is set
 		flags = os.O_WRONLY | os.O_CREATE | os.O_TRUNC
 	}
 
-	f, err := os.OpenFile(file, flags, 0744)
+	// Set permissions, only stubs with a shebang are meant to be executed directly
+	perm := fs.FileMode(0644)
+	if strings.HasPrefix(code, "#!") {
+		perm = 0755
+	}
+
+	// Create and open file, if it doesn't exist
+	f, err := os.OpenFile(file, flags, perm)
 	if errors.Is(err, fs.ErrExist) {
 		return errors.New("ERROR: " + file + " already exists, use -f to overwrite.")
 	}
 	if err != nil {
-		return errors.New("ERROR: Couldn't write to " + file)
+		return fmt.Errorf("ERROR: Couldn't open file %s: %w", file, err)
 	}
 	defer f.Close()
 
+	// Write code stub to file
 	if _, err := f.WriteString(code); err != nil {
-		return errors.New("ERROR: Couldn't write to " + file)
+		return fmt.Errorf("ERROR: Couldn't write to %s: %w", file, err)
 	}
 	return f.Close()
 }
@@ -119,10 +133,12 @@ func main() {
 
 	code, ok := stubs[ext]
 	if !ok {
-		log.Fatal("ERROR: Cannot create stub for " + cmp.Or(ext, "EMPTY") + " extension.")
+		fmt.Println("ERROR: Cannot create stub for " + cmp.Or(ext, "EMPTY") + " extension.")
+		os.Exit(1)
 	}
 
 	if err := writeToFile(file, code, force); err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		os.Exit(1)
 	}
 }
