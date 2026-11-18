@@ -172,14 +172,14 @@ func main() {
 		// Find code stub based on extension
 		code, ok := stubs[ext]
 		if !ok {
-			fmt.Println("ERROR: Cannot create stub for", cmp.Or(ext, "EMPTY"), "extension.")
-			os.Exit(1)
+			fmt.Printf("Unsupported extension \"%s\" for file \"%s\"\n", cmp.Or(ext, "EMPTY"), file)
+			continue
 		}
 
 		// Create or open file and write the code stub
 		if err := writeToFile(file, code, force); err != nil {
 			fmt.Println(err)
-			os.Exit(1)
+			continue
 		}
 
 		fmt.Println("Conjured", file)
