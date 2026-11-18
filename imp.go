@@ -21,7 +21,9 @@ const (
 	hsCode     = "main :: IO ()\nmain = putStrLn \">:3\"\n"
 	kotlinCode = "// Your imports\n\nfun main() {\n\t// Your logic\n\tprintln(\">:3\")\n}\n"
 	swiftCode  = "// Your imports\nimport Foundation\n\n// Your logic\nprint(\">:3\")\n"
-	vCode      = "fn main() {\n\t// Your logic\n\tprintln('>:3')\n}\n"
+	javaCode   = "void main() {\n\t// Your logic\n\tIO.println(\">:3\");\n}\n"
+	csharpCode = "// Your logic\nConsole.WriteLine(\">:3\")"
+	dartCode   = "void main() {\n\t// Your logic\n\tprint('>:3');\n}"
 
 	// Interpreted langs
 	pyCode   = "#!/usr/bin/env python3\n\ndef main():\n\t# Your logic\n\tprint(\">:3\")\n\nif __name__ == \"__main__\":\n\tmain()\n"
@@ -31,6 +33,13 @@ const (
 	perlCode = "#!/usr/bin/env perl\n\n# Your modules\nuse strict;\nuse warnings;\n\n# Your logic\nprint(\">:3\\n\")\n"
 	luaCode  = "#!/usr/bin/env lua\n\n-- Your logic\nprint(\">:3\")\n"
 	bashCode = "#!/usr/bin/env bash\n\n# Your logic\necho \">:3\"\n"
+	fishCode = "#!/usr/bin/env fish\n\n# Your logic\necho \">:3\"\n"
+
+	// Other files
+	mdCode           = "# Title\n\n>:3\n"
+	htmlCode         = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n\t<meta charset=\"UTF-8\">\n\t<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n\t<title>Title</title>\n</head>\n<body>\n\t<!-- Your markup -->\n\t<p>>:3</p>\n</body>\n</html>\n"
+	gitignoreCode    = "# OS\n.DS_Store\nThumbs.db\n\n# Editors\n.idea/\n.vscode/\n\n# Secrets\n.env\n\n# Logs\n*.log\n\n# Your ignores\n"
+	editorconfigCode = "root = true\n\n[*]\ncharset = utf-8\nend_of_line = lf\ninsert_final_newline = true\ntrim_trailing_whitespace = true\n\n# Your rules\n"
 )
 
 var stubs = map[string]string{
@@ -46,20 +55,28 @@ var stubs = map[string]string{
 	".hs":    hsCode,
 	".kt":    kotlinCode,
 	".swift": swiftCode,
-	".v":     vCode,
+	".java":  javaCode,
+	".cs":    csharpCode,
 
 	// Interpreted langs
-	".py":  pyCode,
-	".js":  jsTsCode,
-	".ts":  jsTsCode,
-	".php": phpCode,
-	".rb":  rubyCode,
-	".pl":  perlCode,
-	".lua": luaCode,
-	".sh":  bashCode,
+	".py":   pyCode,
+	".js":   jsTsCode,
+	".ts":   jsTsCode,
+	".php":  phpCode,
+	".rb":   rubyCode,
+	".pl":   perlCode,
+	".lua":  luaCode,
+	".sh":   bashCode,
+	".fish": fishCode,
+
+	// Other files
+	".md":           mdCode,
+	".html":         htmlCode,
+	".gitignore":    gitignoreCode,
+	".editorconfig": editorconfigCode,
 }
 
-var VERSION = "v0.4.0"
+var VERSION = "v0.5.0"
 
 func usage() {
 	fmt.Print("imp - a tiny helper that conjures source file stubs >:3\n\n")
