@@ -5,8 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -51,8 +53,6 @@ var stubs = map[string]string{
 	".go":    goCode,
 	".c":     cCode,
 	".cpp":   cppCode,
-	".cc":    cppCode,
-	".cxx":   cppCode,
 	".rs":    rustCode,
 	".zig":   zigCode,
 	".nim":   nimCode,
@@ -72,7 +72,6 @@ var stubs = map[string]string{
 	".pl":   perlCode,
 	".lua":  luaCode,
 	".r":    rCode,
-	".R":    rCode,
 	".sh":   bashCode,
 	".zsh":  zshCode,
 	".fish": fishCode,
@@ -86,14 +85,15 @@ var stubs = map[string]string{
 	".editorconfig": editorconfigCode,
 }
 
-var VERSION = "v0.5.0"
+var VERSION = "v0.7.0"
 
 func usage() {
-	fmt.Print("imp - a tiny helper that conjures source file stubs >:3\n\n")
-	fmt.Print("Usage: imp [-h|--help] [-v|--version] [-f|--force] <file_1> [file_2 ...]\n\n")
+	fmt.Print("imp - a tiny familiar that conjures source file stubs\n\n")
+	fmt.Print("Usage: imp [-h|--help] [-v|--version] [-l|--list] [-f|--force] <file_1> [file_2 ...]\n\n")
 	fmt.Print("Options:\n")
 	fmt.Print("\t-h, --help\tShow this help message\n")
 	fmt.Print("\t-v, --version\tShow version\n")
+	fmt.Print("\t-l, --list\tShow supported file extensions\n")
 	fmt.Print("\t-f, --force\tOverwrite existing files\n")
 }
 
@@ -109,11 +109,14 @@ func parseArgs() ([]string, bool) {
 		case "-v", "--version":
 			fmt.Printf("imp %s\n", VERSION)
 			os.Exit(0)
+		case "-l", "--list":
+			fmt.Println(strings.Join(slices.Sorted(maps.Keys(stubs)), "\n"))
+			os.Exit(0)
 		case "-f", "--force":
 			force = true
 		default:
 			if strings.HasPrefix(os.Args[i], "-") {
-				fmt.Println("ERROR: Unknown flag " + os.Args[i])
+				fmt.Println("ERROR: Unknown flag", os.Args[i])
 				os.Exit(2)
 			}
 			posArgs = append(posArgs, os.Args[i])
@@ -163,18 +166,22 @@ func main() {
 	files, force := parseArgs()
 
 	for _, file := range files {
-		fmt.Println(file)
+		// Get file extension
 		ext := filepath.Ext(file)
 
+		// Find code stub based on extension
 		code, ok := stubs[ext]
 		if !ok {
-			fmt.Println("ERROR: Cannot create stub for " + cmp.Or(ext, "EMPTY") + " extension.")
+			fmt.Println("ERROR: Cannot create stub for", cmp.Or(ext, "EMPTY"), "extension.")
 			os.Exit(1)
 		}
 
+		// Create or open file and write the code stub
 		if err := writeToFile(file, code, force); err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
+
+		fmt.Println("Conjured", file)
 	}
 }
