@@ -59,13 +59,18 @@ var stubs = map[string]string{
 	".sh":  bashCode,
 }
 
-var VERSION = "v0.3.0"
+var VERSION = "v0.4.0"
 
 func usage() {
-	fmt.Println("imp")
+	fmt.Print("imp - a tiny helper that conjures source file stubs >:3\n\n")
+	fmt.Print("Usage: imp [-h|--help] [-v|--version] [-f|--force] <file_1> [file_2 ...]\n\n")
+	fmt.Print("Options:\n")
+	fmt.Print("\t-h, --help\tShow this help message\n")
+	fmt.Print("\t-v, --version\tShow version\n")
+	fmt.Print("\t-f, --force\tOverwrite existing files\n")
 }
 
-func parseArgs() (string, bool) {
+func parseArgs() ([]string, bool) {
 	var posArgs []string
 	force := false
 
@@ -93,7 +98,7 @@ func parseArgs() (string, bool) {
 		os.Exit(2)
 	}
 
-	return posArgs[0], force
+	return posArgs, force
 }
 
 func writeToFile(file string, code string, force bool) error {
@@ -128,17 +133,21 @@ func writeToFile(file string, code string, force bool) error {
 }
 
 func main() {
-	file, force := parseArgs()
-	ext := filepath.Ext(file)
+	files, force := parseArgs()
 
-	code, ok := stubs[ext]
-	if !ok {
-		fmt.Println("ERROR: Cannot create stub for " + cmp.Or(ext, "EMPTY") + " extension.")
-		os.Exit(1)
-	}
+	for _, file := range files {
+		fmt.Println(file)
+		ext := filepath.Ext(file)
 
-	if err := writeToFile(file, code, force); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		code, ok := stubs[ext]
+		if !ok {
+			fmt.Println("ERROR: Cannot create stub for " + cmp.Or(ext, "EMPTY") + " extension.")
+			os.Exit(1)
+		}
+
+		if err := writeToFile(file, code, force); err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 	}
 }
