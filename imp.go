@@ -13,6 +13,12 @@ import (
 )
 
 const (
+	reset = "\x1b[0m"
+	red   = "\x1b[91m"
+	green = "\x1b[92m"
+)
+
+const (
 	// Compiled langs
 	goCode     = "package main\n\nimport (\n\t// Your imports\n\t\"fmt\"\n)\n\nfunc main() {\n\t// Your logic\n\tfmt.Println(\">:3\")\n}\n"
 	cCode      = "// Your headers\n#include <stdio.h>\n\nint main(int argc, char *argv[]) {\n\t// Your logic\n\tprintf(\">:3\\n\");\n}\n"
@@ -87,6 +93,11 @@ var stubs = map[string]string{
 
 var VERSION = "v0.7.0"
 
+func paint(colour string, text string) string {
+	// Build string with ANSI colour codes
+	return colour + text + reset
+}
+
 func usage() {
 	fmt.Print("imp - a tiny familiar that conjures source file stubs\n\n")
 	fmt.Print("Usage: imp [-h|--help] [-v|--version] [-l|--list] [-f|--force] <file_1> [file_2 ...]\n\n")
@@ -115,10 +126,12 @@ func parseArgs() ([]string, bool) {
 		case "-f", "--force":
 			force = true
 		default:
+			// Check for unknown flags
 			if strings.HasPrefix(os.Args[i], "-") {
-				fmt.Println("ERROR: Unknown flag", os.Args[i])
+				fmt.Printf(paint(red, "ERROR: Unknown flag %s\n"), os.Args[i])
 				os.Exit(2)
 			}
+			// Collect positional arguments
 			posArgs = append(posArgs, os.Args[i])
 		}
 	}
@@ -172,16 +185,16 @@ func main() {
 		// Find code stub based on extension
 		code, ok := stubs[ext]
 		if !ok {
-			fmt.Printf("Unsupported extension \"%s\" for file \"%s\"\n", cmp.Or(ext, "EMPTY"), file)
+			fmt.Printf(paint(red, "Unsupported extension \"%s\" for file \"%s\"\n"), cmp.Or(ext, "EMPTY"), file)
 			continue
 		}
 
 		// Create or open file and write the code stub
 		if err := writeToFile(file, code, force); err != nil {
-			fmt.Println(err)
+			fmt.Println(paint(red, err.Error()))
 			continue
 		}
 
-		fmt.Println("Conjured", file)
+		fmt.Println(paint(green, "Conjured:"), file)
 	}
 }

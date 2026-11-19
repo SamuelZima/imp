@@ -37,7 +37,7 @@ imp -l                       # list supported extensions
 
 ```sh
 $ imp hello.py && ./hello.py
-Conjured hello.py
+Conjured: hello.py
 >:3
 ```
 
@@ -50,6 +50,7 @@ Conjured hello.py
 ## Notes
 
 - Existing files are never overwritten without `-f`.
+- Output is coloured with ANSI escape codes: successes in green, errors (unknown flags, unsupported extensions, write failures) in red.
 
 ## License
 
