@@ -1,10 +1,27 @@
 # Imp
 
-A tiny familiar that conjures source file stubs.
+<p align="center">
+  <img src="./img/imp.png" alt="Imp" width="225">
+</p>
+
+**A tiny familiar that conjures source file stubs.**
 
 `imp` creates new files pre-filled with a minimal, runnable starter for their language: a hello world for code, a skeleton for HTML/CSS, sensible defaults for config files. You can pass one or more file names. The stub is chosen by the file's extension. Scripts get a shebang and executable permissions, and existing files are left untouched unless you pass the `-f` or `--force` flag.
 
 ## Install
+
+### Prebuilt binaries
+
+Download the archive for your platform (Linux, macOS, Windows) from the [releases page](https://github.com/SamuelZima/imp/releases/latest), extract it and put `imp` somewhere on your `PATH`:
+
+```sh
+tar -xzf imp_*_darwin_arm64.tar.gz
+sudo mv imp /usr/local/bin/
+```
+
+On macOS, if Gatekeeper blocks the binary, run `xattr -d com.apple.quarantine /usr/local/bin/imp`.
+
+### With Go
 
 ```sh
 go install github.com/SamuelZima/imp@latest
@@ -39,6 +56,14 @@ imp -l                       # list supported extensions
 $ imp hello.py && ./hello.py
 Conjured: hello.py
 >:3
+```
+
+```sh
+$ imp index.html server_logic.php script.js .gitignore
+Conjured: index.html
+Conjured: server_logic.php
+Conjured: script.js
+Conjured: .gitignore
 ```
 
 ## Supported extensions
